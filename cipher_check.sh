@@ -12,8 +12,10 @@ OPTIONS="-connect"
 echo -e "############################################\n# SSL-Test: $SERVER:$PORT\n############################################\n"
 
 case "$PORT" in
+	587)	OPTIONS="-starttls smtp -connect" ;;
 	443)	OPTIONS="-connect" ;;
 	143)	OPTIONS="-starttls imap -connect" ;;
+	25)	OPTIONS="-starttls smtp -connect" ;;
 	*)	echo unknown Port: $PORT
 		exit 1 ;;
 esac
