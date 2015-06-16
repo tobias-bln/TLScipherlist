@@ -6,8 +6,6 @@
 
 # OS X:
 
-TMP="/tmp/TLScipherlist.tmp"
-
 SERVER=$1
 PORT=$2
 SSLbin=$3
