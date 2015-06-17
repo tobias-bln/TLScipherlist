@@ -47,7 +47,7 @@ fi
 if [ "$PORT" = "443" ] ; then
 
 	echo "Check for HSTS and HPKP Headers:"
-	curl -s -I https://$SERVER | grep -iE "Strict-Transport-Security|Public-Key-Pins"
+	curl -s -I https://$SERVER | grep -iE "Strict-Transport-Security|Public-Key-Pins|Connection:"
 	echo "\n"
 
 fi
