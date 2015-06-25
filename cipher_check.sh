@@ -1,31 +1,49 @@
 #!/bin/sh
 
-# echo quit | openssl s_client -connect www.example.com:443 -cipher ALL 2>&1 | grep -E "Cipher.*:" | awk '{print $3}'
+VERBOSE="no"
 
-# Linux add -e -> echo -e
-
-# OS X:
-
-SERVER=$1
-PORT=$2
-SSLbin=$3
-
-TEST_PROTO="ssl2 ssl3 tls1 tls1_1 tls1_2"
-
-OPTIONS="-connect"
-
-case "$SSLbin" in
-	osx) OPENSSLPATH="/usr/bin/openssl" ;;
-	brew) OPENSSLPATH="/usr/local/opt/openssl/bin/openssl" ;;
+case `uname` in
+	Linux)	OPENSSLPATH="/usr/bin/openssl"
+		alias echo='echo -e'
+		echo Linux
+		;;
+	Darwin)	if [ -f /usr/local/opt/openssl/bin/openssl ] ; then
+			OPENSSLPATH="/usr/local/opt/openssl/bin/openssl"
+		else
+			OPENSSLPATH="/usr/bin/openssl"
+		fi
+	        echo Darwin
+		;;
 	*) OPENSSLPATH="openssl" ;;
 esac
 
+while getopts s:p:b:v opt
+do
+	case $opt in
+		s) SERVER=$OPTARG;;
+		p) PORT=$OPTARG;;
+		b) if [ -f $OPTARG ] ; then
+			SSLbin=$OPTARG
+		   else
+			echo ERROR: $OPTARG existiert nicht!
+			exit 1
+		   fi;;
+		v) VERBOSE="yes";;
+	esac
+done
+
+if [[ $SERVER = "" ]] || [[ $PORT = "" ]] ; then
+	echo "$0 -s <SERVER> -p <PORT> [-b OPENSSLBINARY]"
+	exit 1
+fi
+
+TEST_PROTO="ssl2 ssl3 tls1 tls1_1 tls1_2"
+OPTIONS="-connect"
 OPENSSLversion=`$OPENSSLPATH version`
 
 echo "############################################\n# \
 SSL-Test: $SERVER:$PORT\n# \
 OpenSSL Version: $OPENSSLversion \n############################################\n"
-
 
 case "$PORT" in
 	587)	OPTIONS="-starttls smtp -connect" ;;
@@ -43,17 +61,36 @@ if [ -f /usr/local/opt/openssl/bin/openssl ] ; then
 	echo "\n"
 fi
 
-
 if [ "$PORT" = "443" ] ; then
 
+	#HSTS="no"
+	#HPKP="no"
+	#HTTPKeepAlive="yes"
+
 	echo "Check for HSTS and HPKP Headers:"
-	curl -s -I https://$SERVER | grep -iE "Strict-Transport-Security|Public-Key-Pins|Connection:"
+	curl -sI https://$SERVER |
+	while read line ; do
+		case $line in
+			*Strict-Transport-Security*)	echo $line 
+							HSTS="yes"
+							HSTSmaxage=`echo $line | grep -iEo "max-age=[0-9]+"` | cut -d "=" -f 2 ;;
+			*Public-Key-Pins*)		echo $line
+							HPKP="yes" ;;
+			*Connection:\ close*)		echo $line
+							HTTPKeepAlive="no" ;;
+			*)				;;
+		esac
+	done
+echo $HSTS $HPKP $HTTPKeepAlive
+	echo "\n"
+	if [ $HSTS = "yes" ] ; then
+		echo $HSTSmaxage
+		echo test
+	fi
 	echo "\n"
 
 fi
-
-#exit 0
-
+exit 0
 for i in $TEST_PROTO
 do
 	CIPHER="ALL"
@@ -72,6 +109,6 @@ do
 	done
 
 	echo "PROTO: $i\n$CIPHER_LIST\n\n"
-
 done
 
+. $(dirname $0)/dhscan.sh

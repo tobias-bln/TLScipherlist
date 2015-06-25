@@ -1,7 +1,7 @@
 #!/bin/sh
 
-HOST=$1
-PORT=$2
+#SERVER=$1
+#PORT=$2
 
 # SKE = ServerKeyExchange
 INSKE=0
@@ -12,7 +12,8 @@ basename="$(dirname $script)"
 PRIMES="/Users/tobias/Pydio/My Files/dhscan/primes.txt"
 
 
-echo quit | /usr/local/opt/openssl/bin/openssl s_client -debug -msg -connect $HOST:$PORT -cipher DHE\
+#echo quit | /usr/local/opt/openssl/bin/openssl s_client -debug -msg $OPTIONS $SERVER:$PORT -cipher DHE\
+echo quit | $OPENSSLPATH s_client -debug -msg $OPTIONS $SERVER:$PORT -cipher DHE\
             > $TMP 2> /dev/null
 
 if [ "$?" = "0" ] ; then
@@ -58,6 +59,7 @@ PubkeyHex=`echo $SKE | cut -c $((13 + 4 + 4 + $LengthP * 2 + $LengthG * 2 ))-$((
 
 
 ## print p,g,pubkey
+if [ $VERBOSE = "yes" ] ; then
 echo "\
 Length of p: $LengthP Bytes\n\
 p:\n\
@@ -68,14 +70,16 @@ $GHex\n\n\
 Length of Pubkey: $LengthPubkey Bytes\n\
 Pubkey:\n\
 $PubkeyHex\n"
-
+fi
 
 ## scan primes file
 
-ServerNameTLS="`curl --connect-timeout 5 -sI  https://$HOST |\
-                grep "Server:" | cut -d " " -f 2- | tr " " "_" | tr -d "[:cntrl:]"`"
-ServerName="`curl --connect-timeout 5 -sI  http://$HOST |\
-             grep "Server:" | cut -d " " -f 2- | tr " " "_" | tr -d "[:cntrl:]"`"
+if [ $PORT = "443" ] ; then
+	ServerNameTLS="`curl --connect-timeout 5 -sI  https://$SERVER |\
+        	        grep "Server:" | cut -d " " -f 2- | tr " " "_" | tr -d "[:cntrl:]"`"
+	ServerName="`curl --connect-timeout 5 -sI  http://$SERVER |\
+	             grep "Server:" | cut -d " " -f 2- | tr " " "_" | tr -d "[:cntrl:]"`"
+fi
 
 if [ "$ServerNameTLS" = "" ] ; then
 	ServerNameTLS="UNKNOWN"
