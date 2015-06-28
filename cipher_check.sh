@@ -1,5 +1,8 @@
 #!/bin/sh
 
+. $(dirname $0)/dhscan.sh
+
+TMP="/tmp/ciphercheck.tmp"
 VERBOSE="no"
 
 case `uname` in
@@ -68,19 +71,23 @@ if [ "$PORT" = "443" ] ; then
 	#HTTPKeepAlive="yes"
 
 	echo "Check for HSTS and HPKP Headers:"
-	curl -sI https://$SERVER |
-	while read line ; do
+	curl -sI https://$SERVER > $TMP
+	while read line 
+	do
 		case $line in
 			*Strict-Transport-Security*)	echo $line 
 							HSTS="yes"
-							HSTSmaxage=`echo $line | grep -iEo "max-age=[0-9]+"` | cut -d "=" -f 2 ;;
+							echo $line | grep -iEo "max-age=[0-9]+" | cut -d "=" -f 2
+							HSTSmaxage=`echo $line | grep -iEo "max-age=[0-9]+" | cut -d "=" -f 2` ;;
 			*Public-Key-Pins*)		echo $line
 							HPKP="yes" ;;
 			*Connection:\ close*)		echo $line
 							HTTPKeepAlive="no" ;;
 			*)				;;
 		esac
-	done
+	done < $TMP
+	rm $TMP
+	
 echo $HSTS $HPKP $HTTPKeepAlive
 	echo "\n"
 	if [ $HSTS = "yes" ] ; then
@@ -90,7 +97,7 @@ echo $HSTS $HPKP $HTTPKeepAlive
 	echo "\n"
 
 fi
-exit 0
+#exit 0
 for i in $TEST_PROTO
 do
 	CIPHER="ALL"
@@ -111,4 +118,8 @@ do
 	echo "PROTO: $i\n$CIPHER_LIST\n\n"
 done
 
-. $(dirname $0)/dhscan.sh
+get_dhparams
+print_dhparams
+get_servername
+scan_dhprimesfile
+

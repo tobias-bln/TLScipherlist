@@ -1,9 +1,8 @@
 #!/bin/sh
 
-#SERVER=$1
-#PORT=$2
 
-# SKE = ServerKeyExchange
+get_dhparams() {
+
 INSKE=0
 TMP="/tmp/dhscan.tmp"
 script=$0
@@ -11,8 +10,6 @@ basename="$(dirname $script)"
 #PRIMES="$basename/primes.txt"
 PRIMES="/Users/tobias/Pydio/My Files/dhscan/primes.txt"
 
-
-#echo quit | /usr/local/opt/openssl/bin/openssl s_client -debug -msg $OPTIONS $SERVER:$PORT -cipher DHE\
 echo quit | $OPENSSLPATH s_client -debug -msg $OPTIONS $SERVER:$PORT -cipher DHE\
             > $TMP 2> /dev/null
 
@@ -57,9 +54,12 @@ LengthPubkeyHex=`echo $SKE | cut -c $((13 + 4 + $LengthP * 2 + $LengthG * 2))-$(
 LengthPubkey=`echo $((16#$LengthPubkeyHex))`
 PubkeyHex=`echo $SKE | cut -c $((13 + 4 + 4 + $LengthP * 2 + $LengthG * 2 ))-$((13 + 4 + 3 + $LengthP * 2 + $LengthG * 2 + $LengthPubkey * 2))`
 
+}
+
+print_dhparams() {
 
 ## print p,g,pubkey
-if [ $VERBOSE = "yes" ] ; then
+#if [ $VERBOSE = "yes" ] ; then
 echo "\
 Length of p: $LengthP Bytes\n\
 p:\n\
@@ -70,8 +70,11 @@ $GHex\n\n\
 Length of Pubkey: $LengthPubkey Bytes\n\
 Pubkey:\n\
 $PubkeyHex\n"
-fi
+#fi
 
+}
+
+get_servername() {
 ## scan primes file
 
 if [ $PORT = "443" ] ; then
@@ -92,6 +95,10 @@ fi
 echo Server Name is: $ServerNameTLS
 echo Server Name may be: $ServerName
 
+}
+
+scan_dhprimesfile() {
+
 while read line ;do
 	if [[ $line =~ ^$PHex ]] ; then
                 if [[ $line =~ " $ServerNameTLS " ]] || [[ $line =~ "$ServerNameTLS"$  ]] ; then
@@ -104,3 +111,4 @@ while read line ;do
         fi
 done < $PRIMES
 
+}
