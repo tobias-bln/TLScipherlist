@@ -1,9 +1,16 @@
 #!/bin/sh
 
-. $(dirname $0)/dhscan.sh
+. $(dirname $0)/functions.sh
 
 TMP="/tmp/ciphercheck.tmp"
+
 VERBOSE="no"
+
+script=$0
+basename="$(dirname $script)"
+
+#PRIMES="$basename/primes.txt"
+PRIMES="/Users/tobias/Pydio/My Files/dhscan/primes.txt"
 
 case `uname` in
 	Linux)	OPENSSLPATH="/usr/bin/openssl"
@@ -57,66 +64,18 @@ case "$PORT" in
 		exit 1 ;;
 esac
 
-if [ -f /usr/local/opt/openssl/bin/openssl ] ; then
-	echo Key Parameters:
-	echo | /usr/local/opt/openssl/bin/openssl s_client $OPTIONS $SERVER:$PORT -cipher "DH" \
-		2>/dev/null | grep -iE "key.*bit.*"
-	echo "\n"
-fi
+# todo: openssl version check
+#print_keyparams
 
 if [ "$PORT" = "443" ] ; then
 
-	#HSTS="no"
-	#HPKP="no"
-	#HTTPKeepAlive="yes"
-
-	echo "Check for HSTS and HPKP Headers:"
-	curl -sI https://$SERVER > $TMP
-	while read line 
-	do
-		case $line in
-			*Strict-Transport-Security*)	echo $line 
-							HSTS="yes"
-							echo $line | grep -iEo "max-age=[0-9]+" | cut -d "=" -f 2
-							HSTSmaxage=`echo $line | grep -iEo "max-age=[0-9]+" | cut -d "=" -f 2` ;;
-			*Public-Key-Pins*)		echo $line
-							HPKP="yes" ;;
-			*Connection:\ close*)		echo $line
-							HTTPKeepAlive="no" ;;
-			*)				;;
-		esac
-	done < $TMP
-	rm $TMP
-	
-echo $HSTS $HPKP $HTTPKeepAlive
-	echo "\n"
-	if [ $HSTS = "yes" ] ; then
-		echo $HSTSmaxage
-		echo test
-	fi
-	echo "\n"
+    get_httpheaders
 
 fi
-#exit 0
-for i in $TEST_PROTO
-do
-	CIPHER="ALL"
-	TEST_CIPHER="init"
-	CIPHER_LIST="Liste der Cipher-Suites:"
 
-	while [ "$TEST_CIPHER" != "" ] && [ "$TEST_CIPHER" != "0000" ] || [ "$TEST_CIPHER" = "init" ]
-	do
-		CIPHER=$CIPHER:-$TEST_CIPHER
-		TEST_CIPHER=`echo quit | $OPENSSLPATH s_client -$i $OPTIONS $SERVER:$PORT -cipher $CIPHER 2>&1 \
-			| grep -E "Cipher.*:.*-.*" | awk '{print $3}'`
+exit 0
 
-		if [ "$TEST_CIPHER" != "0000" ] && [ "$TEST_CIPHER" != "" ]; then
-			CIPHER_LIST="$CIPHER_LIST\n$TEST_CIPHER"
-		fi
-	done
-
-	echo "PROTO: $i\n$CIPHER_LIST\n\n"
-done
+cipher_scan
 
 get_dhparams
 print_dhparams

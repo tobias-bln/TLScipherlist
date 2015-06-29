@@ -33,39 +33,60 @@ cipher_scan() {
 
 }
 
-get_http-headers() {
+get_httpheaders() {
 
-    #HSTS="no"
-    #HPKP="no"
-    #HTTPKeepAlive="yes"
+    HSTS="no"
+    HPKP="no"
+    HTTPKeepAlive="yes"
 
-    echo "Check for HSTS and HPKP Headers:"
+    echo "Check for HTTP Headers:"
     curl -sI https://$SERVER > $TMP
     while read line
     do
         case $line in
             *Strict-Transport-Security*)	echo $line
                                             HSTS="yes"
-                                            echo $line | grep -iEo "max-age=[0-9]+" | cut -d "=" -f 2
+                                            #echo $line | grep -iEo "max-age=[0-9]+" | cut -d "=" -f 2
                                             HSTSmaxage=`echo $line | grep -iEo "max-age=[0-9]+" | cut -d "=" -f 2` ;;
 
             *Public-Key-Pins*)              echo $line
-                                            HPKP="yes" ;;
+                                            HPKP="yes"
+                                            HPKPmaxage=`echo $line | grep -iEo "max-age=[0-9]+" | cut -d "=" -f 2`;;
 
-            *Connection:\ close*)           echo $line
-                                            HTTPKeepAlive="no" ;;
+            *Connection:\ close*)           HTTPKeepAlive="no" ;;
 
             *)                              ;;
         esac
     done < $TMP
     rm $TMP
 
-    echo $HSTS $HPKP $HTTPKeepAlive
-    echo "\n"
+    #echo $HSTS $HPKP $HTTPKeepAlive
+    echo ""
 
     if [ $HSTS = "yes" ] ; then
-        echo $HSTSmaxage
-        echo test
+        if [ $HSTSmaxage -ge 31536000 ] ; then
+            echo "\tgood:\tStrict-Transport-Security max-age is >= 31536000 (1 year)"
+        else
+            echo "\t!:\tStrict-Transport-Security max-age is < 31536000 (1 year)"
+        fi
+    else
+        echo "\tbad:\tno HTTP-Strict-Transport-Security-Header send"
+    fi
+
+    if [ $HPKP = "yes" ] ; then
+        if [ $HPKPmaxage -ge 5184000 ] ; then
+            echo "\tgood:\tPublic-Key-Pins max-age is >= 5184000 (60 days)"
+        else
+            echo "\t!:\tPublic-Key-Pins max-age is < 5184000 (60 days)"
+        fi
+    else
+        echo "\tbad:\tno HTTP-Public-Key-Pins-Header send"
+    fi
+
+    if [ $HTTPKeepAlive = "yes" ] ; then
+        echo "\tgood:\tHTTP Keep-Alive on"
+    else
+        echo "\t!:\tHTTP Keep-Alive off "
     fi
 
     echo "\n"
@@ -173,7 +194,7 @@ scan_dhprimesfile() {
                 echo "This Server is NOT known to use these prime."
                 echo "Servers, known to use these prime: `echo $line | cut -d \" \" -f 2-`"
             fi
-            fi
+        fi
     done < $PRIMES
 
 }
