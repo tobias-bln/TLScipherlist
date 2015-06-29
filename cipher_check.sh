@@ -73,12 +73,13 @@ if [ "$PORT" = "443" ] ; then
 
 fi
 
-exit 0
-
 cipher_scan
-
 get_dhparams
-print_dhparams
+
+if [ $VERBOSE = "yes" ] ; then
+    print_dhparams
+fi
+
 get_servername
 scan_dhprimesfile
 
