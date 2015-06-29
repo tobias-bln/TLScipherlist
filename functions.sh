@@ -70,7 +70,7 @@ get_httpheaders() {
             echo "\t!:\tStrict-Transport-Security max-age is < 31536000 (1 year)"
         fi
     else
-        echo "\tbad:\tno HTTP-Strict-Transport-Security-Header send"
+        echo "\tbad:\tno HTTP-Strict-Transport-Security-Header"
     fi
 
     if [ $HPKP = "yes" ] ; then
@@ -80,7 +80,7 @@ get_httpheaders() {
             echo "\t!:\tPublic-Key-Pins max-age is < 5184000 (60 days)"
         fi
     else
-        echo "\tbad:\tno HTTP-Public-Key-Pins-Header send"
+        echo "\tbad:\tno HTTP-Public-Key-Pins-Header"
     fi
 
     if [ $HTTPKeepAlive = "yes" ] ; then
@@ -176,6 +176,8 @@ get_servername() {
     if [ "$ServerName" = "" ] ; then
         ServerName="UNKNOWN"
     fi
+
+# todo: nmap -sV example.com -p
 
     echo Server Name is: $ServerNameTLS
     echo Server Name may be: $ServerName
