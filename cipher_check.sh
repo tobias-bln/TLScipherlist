@@ -15,14 +15,14 @@ PRIMES="/Users/tobias/Pydio/My Files/dhscan/primes.txt"
 case `uname` in
 	Linux)	OPENSSLPATH="/usr/bin/openssl"
 		alias echo='echo -e'
-		#echo Linux
+		echo Linux
 		;;
 	Darwin)	if [ -f /usr/local/opt/openssl/bin/openssl ] ; then
 			OPENSSLPATH="/usr/local/opt/openssl/bin/openssl"
 		else
 			OPENSSLPATH="/usr/bin/openssl"
 		fi
-	        #echo Darwin
+	        echo Darwin
 		;;
 	*) OPENSSLPATH="openssl" ;;
 esac
@@ -65,7 +65,7 @@ case "$PORT" in
 esac
 
 # todo: openssl version check
-#print_keyparams
+print_keyparams
 
 if [ "$PORT" = "443" ] ; then
 
