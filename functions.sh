@@ -1,9 +1,16 @@
 #!/bin/sh
 
+check_sslversion() {
+
+    if [ $OPENSSLv -lt 102 ] ; then
+        echo "You should update OpenSSL!\nSome tests will not work unless you update to OpenSSL version 1.0.2 or later.\n"
+    fi
+}
+
 print_keyparams() {
 
     echo Key Parameters:
-    echo | /usr/local/opt/openssl/bin/openssl s_client $OPTIONS $SERVER:$PORT -cipher "DH" \
+    echo | $OPENSSLPATH s_client $OPTIONS $SERVER:$PORT -cipher "DH" \
         2>/dev/null | grep -iE "key.*bit.*"
     echo "\n"
 }

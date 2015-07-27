@@ -33,7 +33,7 @@ do
 		s) SERVER=$OPTARG;;
 		p) PORT=$OPTARG;;
 		b) if [ -f $OPTARG ] ; then
-			SSLbin=$OPTARG
+			OPENSSLPATH=$OPTARG
 		   else
 			echo ERROR: $OPTARG existiert nicht!
 			exit 1
@@ -50,10 +50,13 @@ fi
 TEST_PROTO="ssl2 ssl3 tls1 tls1_1 tls1_2"
 OPTIONS="-connect"
 OPENSSLversion=`$OPENSSLPATH version`
+OPENSSLv=`echo $OPENSSLversion | cut -d " " -f 2 | sed 's/[\.a-z]//g'`
 
 echo "############################################\n# \
 SSL-Test: $SERVER:$PORT\n# \
 OpenSSL Version: $OPENSSLversion \n############################################\n"
+
+check_sslversion
 
 case "$PORT" in
 	587)	OPTIONS="-starttls smtp -connect" ;;
