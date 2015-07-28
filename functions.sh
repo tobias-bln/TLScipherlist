@@ -124,7 +124,7 @@ get_dhparams() {
             fi
         done < $TMP
     else
-        echo "ERROR: ssl handshake failure"
+        echo "ERROR: ssl handshake failure (dhparams)"
         rm $TMP
         exit 1
     fi
@@ -170,9 +170,9 @@ $PubkeyHex\n"
 get_servername() {
 
     if [ $PORT = "443" ] ; then
-        ServerNameTLS="`curl --connect-timeout 5 -sI  https://$SERVER |\
+        ServerNameTLS="`/usr/bin/curl --connect-timeout 5 -sI  https://$SERVER |\
                         grep "Server:" | cut -d " " -f 2- | tr " " "_" | tr -d "[:cntrl:]"`"
-        ServerName="`curl --connect-timeout 5 -sI  http://$SERVER |\
+        ServerName="`/usr/bin/curl --connect-timeout 5 -sI  http://$SERVER |\
                     grep "Server:" | cut -d " " -f 2- | tr " " "_" | tr -d "[:cntrl:]"`"
     fi
 
